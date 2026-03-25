@@ -1,0 +1,58 @@
+{
+  "users": [
+    {
+      "id": "Bald Eagle",
+      "type": "private",
+      "address": "Point Dume 111",
+      "city": "Pineville",
+      "card_id": "123"
+    },
+    {
+      "id": "Squirrel Gus",
+      "type": "private",
+      "address": "Lowest Branch 19",
+      "city": "Oak City",
+      "card_id": "1048"
+    },
+    {
+      "id": "Beaver Bruce",
+      "type": "business",
+      "address": "Dam 1",
+      "email": "beavers@dam-building.com",
+      "city": "Oak City",
+      "card_id": "6302"
+    },
+    {
+      "id": "Beaver Chuck",
+      "type": "business",
+      "address": "Dam 1",
+      "email": "beavers@dam-building.com",
+      "city": "Oak City",
+      "card_id": "6303"
+    },
+    {
+      "id": "Beaver Bertha",
+      "type": "business",
+      "address": "Dam 1",
+      "email": "beavers@dam-building.com",
+      "city": "Oak City",
+      "card_id": "6304"
+    },
+    {
+      "id": "Peppa Python",
+      "type": "business",
+      "address": "Lowest Branch 203",
+      "email": "snakes@savage-stranglers.com",
+      "city": "Oak City",
+      "card_id": "6304"
+    },
+    {
+      "id": "Bear Billy",
+      "type": "business",
+      "address": "Trunk 35",
+      "email": "billy@best-honey.com",
+      "city": "Pineville",
+      "card_id": "6304"
+    }
+  ]
+}
