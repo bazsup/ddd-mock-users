@@ -5,23 +5,6 @@ const middlewares = jsonServer.defaults();
 
 // In-memory stores
 const receivedRequests = [];
-const expectations = new Map();
-let expectationCounter = 0;
-
-function deepEqual(a, b) {
-  return JSON.stringify(sortedKeys(a)) === JSON.stringify(sortedKeys(b));
-}
-
-function sortedKeys(obj) {
-  if (typeof obj !== "object" || obj === null) return obj;
-  if (Array.isArray(obj)) return obj.map(sortedKeys);
-  return Object.keys(obj)
-    .sort()
-    .reduce((acc, k) => {
-      acc[k] = sortedKeys(obj[k]);
-      return acc;
-    }, {});
-}
 
 server.use(middlewares);
 server.use(jsonServer.bodyParser);
@@ -37,79 +20,41 @@ server.post("/api/invoice", (req, res) => {
   };
   receivedRequests.push(entry);
 
-  for (const [, expectation] of expectations) {
-    if (
-      expectation.method === "POST" &&
-      expectation.path === "/api/invoice" &&
-      deepEqual(expectation.body, body)
-    ) {
-      expectation.fulfilledAt = new Date();
-    }
-  }
-
   res.status(200).json({ status: "OK", body });
 });
 
-// POST /api/expect
-server.post("/api/expect", (req, res) => {
-  const { method, path, body, id } = req.body;
-  const uniqueId = String(id || ++expectationCounter);
-  expectations.set(uniqueId, { method, path, body, fulfilledAt: null });
-  res
-    .status(201)
-    .json({
-      id: uniqueId,
-      status: "waiting",
-      expectation: { method, path, body },
-    });
+// POST /api/invoice-inspector/reset
+server.post("/api/invoice-inspector/reset", (req, res) => {
+  receivedRequests.length = 0;
+  res.status(200).json({ status: "reset" });
 });
 
-// GET /api/expect/:id
-server.get("/api/expect/:id", async (req, res) => {
-  const { id } = req.params;
+// GET /api/invoice-inspector/:email
+server.get("/api/invoice-inspector/:email", (req, res) => {
+  const email = req.params.email;
   const timeout = parseInt(req.query.timeout) || 0;
-
-  if (!expectations.has(id)) {
-    return res.status(404).json({ error: "Expectation not found" });
-  }
-
   const deadline = Date.now() + timeout;
 
   const check = () => {
-    const expectation = expectations.get(id);
-    if (!expectation.fulfilledAt) {
-      const match = receivedRequests.find(
-        (r) =>
-          r.method === expectation.method &&
-          r.path === expectation.path &&
-          deepEqual(r.body, expectation.body),
-      );
-      if (match) {
-        expectation.fulfilledAt = match.receivedAt;
-      }
-    }
-    if (expectation.fulfilledAt) {
-      return res
-        .status(200)
-        .json({
-          id,
-          status: "fulfilled",
-          fulfilledAt: expectation.fulfilledAt,
-        });
+    const match = [...receivedRequests]
+      .reverse()
+      .find((r) => r.body && r.body.email === email);
+
+    if (match) {
+      return res.status(200).json({
+        email,
+        status: "fulfilled",
+        fulfilledAt: match.receivedAt,
+        body: match.body,
+      });
     }
     if (Date.now() >= deadline) {
-      return res.status(200).json({ id, status: "waiting" });
+      return res.status(200).json({ email, status: "waiting" });
     }
     setTimeout(check, 200);
   };
 
   check();
-});
-
-// DELETE /api/expect/:id
-server.delete("/api/expect/:id", (req, res) => {
-  expectations.delete(req.params.id);
-  res.status(204).send();
 });
 
 // Add your custom route rewrite here
