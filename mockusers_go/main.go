@@ -1,13 +1,15 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 )
+
+//go:embed db.json
+var dbJSON []byte
 
 func main() {
 	users := loadUsers()
@@ -46,24 +48,11 @@ func jsonMiddleware(next http.Handler) http.Handler {
 }
 
 func loadUsers() []User {
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		// Resolve db.json relative to this source file
-		_, filename, _, _ := runtime.Caller(0)
-		dbPath = filepath.Join(filepath.Dir(filename), "..", "db.json")
-	}
-
-	data, err := os.ReadFile(dbPath)
-	if err != nil {
-		log.Printf("warning: could not read %s: %v — starting with empty user store", dbPath, err)
-		return nil
-	}
-
 	var db struct {
 		Users []User `json:"users"`
 	}
-	if err := json.Unmarshal(data, &db); err != nil {
-		log.Fatalf("failed to parse db.json: %v", err)
+	if err := json.Unmarshal(dbJSON, &db); err != nil {
+		log.Fatalf("failed to parse embedded db.json: %v", err)
 	}
 	return db.Users
 }
