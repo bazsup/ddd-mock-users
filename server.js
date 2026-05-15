@@ -32,8 +32,6 @@ server.post("/api/invoice-inspector/reset", (req, res) => {
 // GET /api/invoice-inspector/:email
 server.get("/api/invoice-inspector/:email", (req, res) => {
   const email = req.params.email;
-  const timeout = parseInt(req.query.timeout) || 0;
-  const deadline = Date.now() + timeout;
 
   const check = () => {
     const match = [...receivedRequests]
@@ -48,10 +46,29 @@ server.get("/api/invoice-inspector/:email", (req, res) => {
         body: match.body,
       });
     }
-    if (Date.now() >= deadline) {
-      return res.status(200).json({ email, status: "waiting" });
+    return res.status(200).json({ email, status: "waiting" });
+  };
+
+  check();
+});
+
+server.post("/api/invoice-inspector", (req, res) => {
+  const email = req.body.email;
+
+  const check = () => {
+    const match = [...receivedRequests]
+      .reverse()
+      .find((r) => r.body && r.body.email === email);
+
+    if (match) {
+      return res.status(200).json({
+        email,
+        status: "fulfilled",
+        fulfilledAt: match.receivedAt,
+        body: match.body,
+      });
     }
-    setTimeout(check, 200);
+    return res.status(200).json({ email, status: "waiting" });
   };
 
   check();
